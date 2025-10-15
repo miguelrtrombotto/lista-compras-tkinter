@@ -1,11 +1,11 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
-from tkinter import filedialog
-import json
-from pathlib import Path
+import tkinter as tk #tkinter para GUI
+from tkinter import ttk, messagebox #messagebox para diálogos
+from tkinter import filedialog #filedialog para abrir/guardar archivos
+import json #json para guardar/cargar en formato JSON
+from pathlib import Path #Path para manejo de rutas
 
 class App:
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk): # Inicialización de la app
         self.root = root
         self.root.title("Lista de compras")
         self.root.geometry("700x520")
@@ -19,7 +19,8 @@ class App:
         self.render()
         self.update_status()
 
-    def _build_ui(self):
+    def _build_ui(self): # Construcción de la UI
+        # Contenedor principal
         main = ttk.Frame(self.root, padding=12)
         main.pack(fill="both", expand=True)
 
@@ -40,10 +41,10 @@ class App:
         ttk.Button(actions, text="Eliminar seleccionado(s)", command=self.delete_selected).pack(side="left")
         ttk.Button(actions, text="Limpiar lista", command=self.clear_list).pack(side="left", padx=6)
         
-        ttk.Button(actions, text="Guardar (Ctrl+S)", command=self.save_json).pack(side="left", padx=6)
-        ttk.Button(actions, text="Abrir (Ctrl+O)", command=self.load_json).pack(side="left", padx=6)
-        self.root.bind("<Control-s>", lambda e: self.save_json())
-        self.root.bind("<Control-o>", lambda e: self.load_json())
+        ttk.Button(actions, text="Guardar (Ctrl+S)", command=self.save_json).pack(side="left", padx=6) #agrego boton guardar
+        ttk.Button(actions, text="Abrir (Ctrl+O)", command=self.load_json).pack(side="left", padx=6) #agrego boton abrir
+        self.root.bind("<Control-s>", lambda e: self.save_json()) #atajo guardar
+        self.root.bind("<Control-o>", lambda e: self.load_json()) #atajo abrir
 
         # Tabla
         table_frame = ttk.Frame(main)
@@ -60,7 +61,7 @@ class App:
         self.tree.column("item", width=520, anchor="w")
         self.tree.column("hecho", width=80, anchor="center")
         self.tree.pack(side="left", fill="both", expand=True)
-        self.tree.bind("<Double-1>", lambda e: self.toggle_done())
+        self.tree.bind("<Double-1>", lambda e: self.toggle_done()) #doble click para marcar/desmarcar hecho
 
         scroll = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         scroll.pack(side="right", fill="y")
@@ -75,18 +76,21 @@ class App:
         self.root.bind("<Delete>", lambda e: self.delete_selected())
 
     # Lógica Issue #2
-    def add_item(self):
+    def add_item(self): #agregar ítem
         text = (self.var_item.get() or "").strip()
         if not text:
             messagebox.showinfo("Info", "Escribe un ítem.")
             return
-        self.items.append({"text": text, "done": False})
-        self.var_item.set("")
-        self.render()
-        self.update_status()
+        if any(i["text"].lower() == text.lower() for i in self.items): #verifico duplicados
+            if not messagebox.askyesno("Duplicado", f"“{text}” ya existe. ¿Agregar de todos modos?"):
+                return
+        self.items.append({"text": text, "done": False}) #agrego ítem
+        self.var_item.set("") #limpio entrada
+        self.render() #actualizo tabla
+        self.update_status() #actualizo estado
 
     # Lógica Issue #3
-    def delete_selected(self):
+    def delete_selected(self): #eliminar seleccionado(s)
         sel = self.tree.selection()
         if not sel:
             messagebox.showinfo("Info", "Selecciona filas para eliminar.")
@@ -97,7 +101,7 @@ class App:
         self.render()
         self.update_status()
 
-    def clear_list(self):
+    def clear_list(self): #limpiar lista
         if not self.items:
             return
         if messagebox.askyesno("Limpiar", "¿Seguro que quieres limpiar toda la lista?"):
@@ -106,17 +110,17 @@ class App:
             self.update_status()
 
     # Render y estado
-    def render(self):
+    def render(self): #actualizar tabla
         self.tree.delete(*self.tree.get_children())
         for it in self.items:
             self.tree.insert("", "end", values=(it["text"], "✔" if it["done"] else ""))
 
-    def update_status(self):
+    def update_status(self): #actualizar estado
         total = len(self.items)
         done = sum(1 for i in self.items if i["done"])
         self.status.set(f"{total} ítems · {done} hechos")
         
-    def save_json(self):
+    def save_json(self): #guardar archivo json
         if not self.current_file:
             path = filedialog.asksaveasfilename(
                 title="Guardar lista",
@@ -134,7 +138,7 @@ class App:
         except Exception as e:
             messagebox.showerror("Error al guardar", str(e))
 
-    def load_json(self):
+    def load_json(self): #abrir archivo json
         path = filedialog.askopenfilename(
             title="Abrir lista",
             filetypes=[("JSON", "*.json"), ("Todos", "*.*")],
@@ -158,7 +162,7 @@ class App:
         except Exception as e:
             messagebox.showerror("Error al abrir", str(e))
             
-    def toggle_done(self):
+    def toggle_done(self): #marcar/desmarcar hecho
         sel = self.tree.selection()
         if not sel:
             focus = self.tree.focus()
