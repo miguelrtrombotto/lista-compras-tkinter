@@ -78,8 +78,11 @@ class App:
     # Lógica Issue #2
     def add_item(self): #agregar ítem
         text = (self.var_item.get() or "").strip()
-        if not text:
+        if not text: #verifico vacío
             messagebox.showinfo("Info", "Escribe un ítem.")
+            return
+        if len(text) > 200: #limito a 200 caracteres
+            messagebox.showinfo("Info", "Máximo 200 caracteres.")
             return
         if any(i["text"].lower() == text.lower() for i in self.items): #verifico duplicados
             if not messagebox.askyesno("Duplicado", f"“{text}” ya existe. ¿Agregar de todos modos?"):
