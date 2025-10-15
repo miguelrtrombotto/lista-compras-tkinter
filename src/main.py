@@ -1,11 +1,15 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from tkinter import filedialog
+import json
+from pathlib import Path
 
 class App:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Lista de compras")
         self.root.geometry("700x520")
+        self.current_file = None
 
         # Modelo: lista de dicts {"text": str, "done": bool}
         self.items = []
@@ -35,6 +39,11 @@ class App:
         actions.pack(fill="x", pady=(6,0))
         ttk.Button(actions, text="Eliminar seleccionado(s)", command=self.delete_selected).pack(side="left")
         ttk.Button(actions, text="Limpiar lista", command=self.clear_list).pack(side="left", padx=6)
+        
+        ttk.Button(actions, text="Guardar (Ctrl+S)", command=self.save_json).pack(side="left", padx=6)
+        ttk.Button(actions, text="Abrir (Ctrl+O)", command=self.load_json).pack(side="left", padx=6)
+        self.root.bind("<Control-s>", lambda e: self.save_json())
+        self.root.bind("<Control-o>", lambda e: self.load_json())
 
         # Tabla
         table_frame = ttk.Frame(main)
@@ -105,6 +114,48 @@ class App:
         total = len(self.items)
         done = sum(1 for i in self.items if i["done"])
         self.status.set(f"{total} ítems · {done} hechos")
+        
+    def save_json(self):
+        if not self.current_file:
+            path = filedialog.asksaveasfilename(
+                title="Guardar lista",
+                defaultextension=".json",
+                filetypes=[("JSON", "*.json"), ("Todos", "*.*")],
+                initialfile="lista_compras.json",
+            )
+            if not path:
+                return
+            self.current_file = Path(path)
+        try:
+            self.current_file.write_text(json.dumps(self.items, ensure_ascii=False, indent=2), encoding="utf-8")
+            self.status.set(f"Guardado en {self.current_file.name}")
+            self.root.after(1800, self.update_status)
+        except Exception as e:
+            messagebox.showerror("Error al guardar", str(e))
+
+    def load_json(self):
+        path = filedialog.askopenfilename(
+            title="Abrir lista",
+            filetypes=[("JSON", "*.json"), ("Todos", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+            if not isinstance(data, list):
+                raise ValueError("Formato inválido: se esperaba una lista.")
+            items = []
+            for it in data:
+                if isinstance(it, dict):
+                    items.append({"text": str(it.get("text","")), "done": bool(it.get("done", False))})
+                else:
+                    items.append({"text": str(it), "done": False})
+            self.items = items
+            self.current_file = Path(path)
+            self.render()
+            self.update_status()
+        except Exception as e:
+            messagebox.showerror("Error al abrir", str(e))
 
 def main():
     root = tk.Tk()
