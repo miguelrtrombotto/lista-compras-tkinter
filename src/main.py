@@ -21,6 +21,16 @@ class App:
         form.columnconfigure(1, weight=1)
         ttk.Button(form, text="Agregar", command=self.add_item).grid(row=0, column=2, padx=(8,0))
         entry.bind("<Return>", lambda e: self.add_item())
+        
+        # Barra de acciones
+        actions = ttk.Frame(main)
+        actions.pack(fill="x", pady=(6, 0))
+
+        ttk.Button(actions, text="Eliminar seleccionado(s)", command=self.delete_selected).pack(side="left")
+        ttk.Button(actions, text="Limpiar lista", command=self.clear_list).pack(side="left", padx=6)
+
+        # Atajo: tecla Supr/Delete elimina seleccionados
+        self.root.bind("<Delete>", lambda e: self.delete_selected())
 
         # Tabla
         table_frame = ttk.Frame(main)
@@ -65,6 +75,26 @@ class App:
         total = len(self.items)
         done = sum(1 for i in self.items if i["done"])
         self.status.set(f"{total} ítems · {done} hechos")
+        
+    def delete_selected(self):
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showinfo("Info", "Selecciona filas para eliminar.")
+            return
+        # Convertir selección a índices y eliminar desde el final para no desfasar
+        indices = [self.tree.index(i) for i in sel]
+        for idx in sorted(indices, reverse=True):
+            self.items.pop(idx)
+        self.render()
+        self.update_status()
+        
+    def clear_list(self):
+        if not self.items:
+            return
+        if messagebox.askyesno("Limpiar", "¿Seguro que quieres limpiar toda la lista?"):
+            self.items.clear()
+            self.render()
+            self.update_status()
 
 def main():
     root = tk.Tk()
