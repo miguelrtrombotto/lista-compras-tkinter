@@ -60,6 +60,7 @@ class App:
         self.tree.column("item", width=520, anchor="w")
         self.tree.column("hecho", width=80, anchor="center")
         self.tree.pack(side="left", fill="both", expand=True)
+        self.tree.bind("<Double-1>", lambda e: self.toggle_done())
 
         scroll = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         scroll.pack(side="right", fill="y")
@@ -156,6 +157,20 @@ class App:
             self.update_status()
         except Exception as e:
             messagebox.showerror("Error al abrir", str(e))
+            
+    def toggle_done(self):
+        sel = self.tree.selection()
+        if not sel:
+            focus = self.tree.focus()
+            if focus:
+                sel = (focus,)
+            else:
+                return
+        for item_id in sel:
+            idx = self.tree.index(item_id)
+            self.items[idx]["done"] = not self.items[idx]["done"]
+        self.render()
+        self.update_status()
 
 def main():
     root = tk.Tk()
