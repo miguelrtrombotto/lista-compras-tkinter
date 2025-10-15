@@ -17,22 +17,14 @@
   },
   {
     "text": "sd",
-    "done": false
-  },
-  {
-    "text": "sf",
     "done": true
   },
   {
+    "text": "sf",
+    "done": false
+  },
+  {
     "text": "sdf",
-    "done": false
-  },
-  {
-    "text": "sf",
-    "done": false
-  },
-  {
-    "text": "sf",
-    "done": false
+    "done": true
   }
 ]
